@@ -3,29 +3,38 @@
 import argparse
 import re
 from functools import reduce
-import returns
+
+from returns.curry import curry
+from returns.pipeline import flow
+
 
 def main():
-    args = arguments()
-
-    
-    words = misses_removed(args.words_file, args.exclusions)
-    words = direct_hits(args.attempts, words)
-    words = wrong_position(args.attempts, words)
-    [print(x) for x in words]
+    words_file, exclusions, attempts = arguments()
+    [print(word) for word in possibilities(exclusions, attempts, five_letter_words(words_file))]
 
 
+@curry
+def possibilities(exclusions, attempts, words):
+    return flow(words,
+                misses_removed(exclusions),
+                direct_hits(attempts),
+                wrong_position(attempts))
+
+
+@curry
 def wrong_position(attempts, words):
     return reduce(lambda accumulation, attempt: misplaced(attempt, accumulation), attempts, words)
 
 
+@curry
 def direct_hits(attempts, words):
     return reduce(lambda accumulation, attempt: matched(words, re.sub('[a-z]', '.', attempt).lower()),
                   attempts, words)
 
 
-def misses_removed(word_file, exclusions):
-    return unmatched(five_letter_words(word_file), "[" + exclusions + "]")
+@curry
+def misses_removed(exclusions, words):
+    return unmatched(words, "[" + exclusions + "]")
 
 
 def misplaced(attempt, words):
@@ -65,7 +74,7 @@ def arguments():
     parser.add_argument('-w', '--words-file', help='Location of the words file', default='/usr/share/dict/words')
     parser.add_argument('attempts', help='efforts made so far', nargs='+')
     args = parser.parse_args()
-    return args
+    return args.words_file, args.exclusions, args.attempts
 
 
 if __name__ == '__main__':
