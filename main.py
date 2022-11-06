@@ -5,17 +5,17 @@ import re
 from functools import reduce
 
 from returns.curry import curry
-from returns.pipeline import flow
+from returns.pipeline import pipe
 
 
 def main():
     words_file, exclusions, attempts = arguments()
-    [print(word) for word in possibilities(exclusions, attempts, five_letter_words(words_file))]
+    [print(word) for word in possibilities(exclusions, attempts)(all_words(words_file))]
 
 
 @curry
-def possibilities(exclusions, attempts, words):
-    return flow(words,
+def possibilities(exclusions, attempts):
+    return pipe(five_letter_words,
                 misses_removed(exclusions),
                 direct_hits(attempts),
                 wrong_position(attempts))
@@ -51,9 +51,13 @@ def misplaced_letters(attempt):
     return [(i, misplaced_chars[i]) for i in range(0, 5) if misplaced_chars[i].isalpha()]
 
 
-def five_letter_words(words_file):
+def five_letter_words(words):
+    return [x for x in matched(words, "[a-z]{5}")]
+
+
+def all_words(words_file):
     with open(words_file) as f:
-        return [x.strip() for x in matched(f.readlines(), "[a-z]{5}")]
+        return [x.strip() for x in f.readlines()]
 
 
 def matched(words, pattern):
