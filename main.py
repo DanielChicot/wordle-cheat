@@ -15,8 +15,12 @@ def main():
 
 
 def misplaced(attempt, words):
-    return reduce(lambda accumulation, pair: unmatched(words, '.....'[:pair[0]] + pair[1] + '.....'[pair[0] + 1:]),
+    return reduce(lambda accumulation, pair: unmatched(words, misplaced_letter_pattern(pair[0], pair[1])),
                   misplaced_letters(attempt), words)
+
+
+def misplaced_letter_pattern(position, letter):
+    return '.....'[:position] + letter + '.....'[position + 1:]
 
 
 def misplaced_letters(attempt):
