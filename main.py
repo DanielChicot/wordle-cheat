@@ -2,11 +2,12 @@
 
 import argparse
 import re
+import sys
 from functools import reduce
 from typing import Callable
 
 from returns.curry import curry
-from returns.io import impure_safe, IOSuccess
+from returns.io import impure_safe, IOSuccess, IOFailure
 from returns.pipeline import flow
 from returns.pipeline import pipe
 from returns.pointfree import map_
@@ -19,6 +20,8 @@ def main():
                map_(possibilities(exclusions, attempts))):
         case IOSuccess(value):
             [print(word) for word in unsafe_perform_io(value)]
+        case IOFailure(value):
+            sys.stderr.write(f"Failed: '{unsafe_perform_io(value)}'.")
 
 
 @curry
