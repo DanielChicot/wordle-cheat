@@ -2,17 +2,29 @@
 
 import argparse
 import re
+import sys
 from functools import reduce
 from typing import Callable
 
 from returns.curry import curry
-from returns.pipeline import pipe
+from returns.pipeline import flow
+from returns.pipeline import pipe, is_successful
+from returns.pointfree import map_
 from returns.result import safe
+from returns.unsafe import unsafe_perform_io
 
 
 def main():
     words_file, exclusions, attempts = arguments()
-    [print(word) for word in possibilities(exclusions, attempts)(all_words(words_file))]
+
+    results = flow(words_file,
+                   all_words,
+                   map_(possibilities(exclusions, attempts)))
+
+    if is_successful(results):
+        [print(word) for word in unsafe_perform_io(results)]
+    else:
+        sys.stderr.write(f"Failure: {unsafe_perform_io(results)}")
 
 
 @curry
@@ -57,7 +69,7 @@ def five_letter_words(words: list[str]) -> list[str]:
     return [x for x in matched(words, "[a-z]{5}")]
 
 
-# @safe
+@safe
 def all_words(words_file: str) -> list[str]:
     with open(words_file) as f:
         return [x.strip() for x in f.readlines()]
