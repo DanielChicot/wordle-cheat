@@ -7,6 +7,7 @@ from typing import Callable
 
 from returns.curry import curry
 from returns.pipeline import pipe
+from returns.result import safe
 
 
 def main():
@@ -56,6 +57,7 @@ def five_letter_words(words: list[str]) -> list[str]:
     return [x for x in matched(words, "[a-z]{5}")]
 
 
+# @safe
 def all_words(words_file: str) -> list[str]:
     with open(words_file) as f:
         return [x.strip() for x in f.readlines()]
