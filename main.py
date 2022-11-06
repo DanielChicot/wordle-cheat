@@ -3,15 +3,29 @@
 import argparse
 import re
 from functools import reduce
-
+import returns
 
 def main():
     args = arguments()
-    words = unmatched(five_letter_words(args.words_file), "[" + args.exclusions + "]")
-    words = reduce(lambda accumulation, attempt: matched(words, re.sub('[a-z]', '.', attempt).lower()),
-                   args.attempts, words)
-    words = reduce(lambda accumulation, attempt: misplaced(attempt, accumulation), args.attempts, words)
+
+    
+    words = misses_removed(args.words_file, args.exclusions)
+    words = direct_hits(args.attempts, words)
+    words = wrong_position(args.attempts, words)
     [print(x) for x in words]
+
+
+def wrong_position(attempts, words):
+    return reduce(lambda accumulation, attempt: misplaced(attempt, accumulation), attempts, words)
+
+
+def direct_hits(attempts, words):
+    return reduce(lambda accumulation, attempt: matched(words, re.sub('[a-z]', '.', attempt).lower()),
+                  attempts, words)
+
+
+def misses_removed(word_file, exclusions):
+    return unmatched(five_letter_words(word_file), "[" + exclusions + "]")
 
 
 def misplaced(attempt, words):
@@ -25,7 +39,7 @@ def misplaced_letter_pattern(position, letter):
 
 def misplaced_letters(attempt):
     misplaced_chars = re.sub('[A-Z]', '.', attempt).lower()
-    return [(x, misplaced_chars[x]) for x in range(0, 5) if misplaced_chars[x].isalpha()]
+    return [(i, misplaced_chars[i]) for i in range(0, 5) if misplaced_chars[i].isalpha()]
 
 
 def five_letter_words(words_file):
