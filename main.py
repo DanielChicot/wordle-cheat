@@ -2,29 +2,23 @@
 
 import argparse
 import re
-import sys
 from functools import reduce
 from typing import Callable
 
 from returns.curry import curry
+from returns.io import impure_safe, IOSuccess
 from returns.pipeline import flow
-from returns.pipeline import pipe, is_successful
+from returns.pipeline import pipe
 from returns.pointfree import map_
-from returns.result import safe
 from returns.unsafe import unsafe_perform_io
 
 
 def main():
     words_file, exclusions, attempts = arguments()
-
-    results = flow(words_file,
-                   all_words,
-                   map_(possibilities(exclusions, attempts)))
-
-    if is_successful(results):
-        [print(word) for word in unsafe_perform_io(results)]
-    else:
-        sys.stderr.write(f"Failure: {unsafe_perform_io(results)}")
+    match flow(all_words(words_file),
+               map_(possibilities(exclusions, attempts))):
+        case IOSuccess(value):
+            [print(word) for word in unsafe_perform_io(value)]
 
 
 @curry
@@ -69,7 +63,7 @@ def five_letter_words(words: list[str]) -> list[str]:
     return [x for x in matched(words, "[a-z]{5}")]
 
 
-@safe
+@impure_safe
 def all_words(words_file: str) -> list[str]:
     with open(words_file) as f:
         return [x.strip() for x in f.readlines()]
@@ -89,9 +83,9 @@ def filtered(include: Callable[[str, str], bool], words: list[str], pattern: str
 
 def arguments() -> tuple[str, str, list[str]]:
     parser = argparse.ArgumentParser(prog='Wordle helper', description='Cheat at wordle')
-    parser.add_argument('-e', '--exclusions', help='Letters that are not in the solution')
-    parser.add_argument('-w', '--words-file', help='Location of the words file', default='/usr/share/dict/words')
-    parser.add_argument('attempts', help='efforts made so far', nargs='+')
+    parser.add_argument('-e', '--exclusions', help='Letters not in the solution')
+    parser.add_argument('-w', '--words-file', help='Words file location', default='/usr/share/dict/words')
+    parser.add_argument('attempts', help='Efforts made', nargs='+')
     args = parser.parse_args()
     return args.words_file, args.exclusions, args.attempts
 
