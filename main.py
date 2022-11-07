@@ -45,7 +45,7 @@ def direct_hits(attempts: str, words: list[str]) -> list[str]:
 
 @curry
 def misses_removed(exclusions: str, words: list[str]) -> list[str]:
-    return unmatched(words, "[" + exclusions + "]")
+    return filtered(lambda x, y: not re.compile(x).search(y), words, "[" + exclusions + "]")
 
 
 def misplaced(attempt: str, words: list[str]) -> list[str]:
